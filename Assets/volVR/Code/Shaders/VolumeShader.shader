@@ -4,7 +4,7 @@ Shader "Unlit/VolumeShader"
     {
         _VolumeTexture ("Volume Texture", 3D) = "white" {}
         _Color ("Color", Color) = (1.0, 1.0, 1.0, 1.0)
-        _CutterPosition ("Cutter Position", Vector) = (0.0, 0.0, 0.0, 1.0)
+        _CutterPosition ("Cutter Position", Vector) = (0.0, 0.0, 0.0, 0.0)
         _CutterNormal ("Cutter Normal", Vector) = (0.0, 0.0, 0.0, 0.0)
         _Alpha ("Alpha", float) = 0.02
         _StepSize ("Step Size", float) = 0.01
@@ -49,11 +49,11 @@ Shader "Unlit/VolumeShader"
             };
 
             UNITY_INSTANCING_BUFFER_START(Props)
-                UNITY_DEFINE_INSTANCED_PROP(float4, _Color)
-                UNITY_DEFINE_INSTANCED_PROP(float4, _CutterPosition)
-                UNITY_DEFINE_INSTANCED_PROP(float4, _CutterNormal)
-                UNITY_DEFINE_INSTANCED_PROP(float, _Alpha)
-                UNITY_DEFINE_INSTANCED_PROP(float, _StepSize)
+            UNITY_DEFINE_INSTANCED_PROP(float4, _Color)
+            UNITY_DEFINE_INSTANCED_PROP(float4, _CutterPosition)
+            UNITY_DEFINE_INSTANCED_PROP(float4, _CutterNormal)
+            UNITY_DEFINE_INSTANCED_PROP(float, _Alpha)
+            UNITY_DEFINE_INSTANCED_PROP(float, _StepSize)
             UNITY_INSTANCING_BUFFER_END(Props)
 
             v2f vert(appdata v)
@@ -82,6 +82,11 @@ Shader "Unlit/VolumeShader"
                 return color;
             }
 
+            float CutterPlaneMask(float4 cutterPositionWorld, float3 cutterNormal, float3 samplePosition) {
+                float visible = dot(cutterNormal, normalize(cutterPositionWorld - mul(unity_ObjectToWorld, float4(samplePosition, 1)).xyz));
+                return max(ceil(clamp(visible, -0.9, 1.0)), 1.0 - cutterPositionWorld.w);
+            }
+
             fixed4 frag(v2f i) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(i);
@@ -92,8 +97,14 @@ Shader "Unlit/VolumeShader"
                 // Use vector from camera to object surface to get ray direction
                 float3 rayDirection = normalize(i.vectorToSurface);
 
+                float4 cutterPositionWorld = UNITY_ACCESS_INSTANCED_PROP(Props, _CutterPosition);
+                float3 cutterNormal = UNITY_ACCESS_INSTANCED_PROP(Props, _CutterNormal).xyz;
+
                 float4 color = float4(UNITY_ACCESS_INSTANCED_PROP(Props, _Color).rgb, 0);
                 float3 samplePosition = rayOrigin;
+
+                float alpha = UNITY_ACCESS_INSTANCED_PROP(Props, _Alpha);
+                float stepSize = UNITY_ACCESS_INSTANCED_PROP(Props, _StepSize);
 
                 // Raymarch through object space
                 for (int i = 0; i < MAX_STEP_COUNT; i++)
@@ -102,9 +113,10 @@ Shader "Unlit/VolumeShader"
                     if(max(abs(samplePosition.x), max(abs(samplePosition.y), abs(samplePosition.z))) < 0.5f + EPSILON)
                     {
                         float4 sampledColor = tex3D(_VolumeTexture, samplePosition + float3(0.5f, 0.5f, 0.5f));
-                        sampledColor.a *= UNITY_ACCESS_INSTANCED_PROP(Props, _Alpha);
+                        sampledColor *= CutterPlaneMask(cutterPositionWorld, cutterNormal, samplePosition);
+                        sampledColor.a *= alpha;
                         color = BlendUnder(color, sampledColor);
-                        samplePosition += rayDirection * UNITY_ACCESS_INSTANCED_PROP(Props, _StepSize);
+                        samplePosition += rayDirection * stepSize;
                     }
                 }
 

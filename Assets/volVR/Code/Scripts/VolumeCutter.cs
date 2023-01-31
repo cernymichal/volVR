@@ -34,9 +34,9 @@ public class VolumeCutter : MonoBehaviour {
         MaterialPropertyBlock props = new MaterialPropertyBlock();
 
         var cutterPosition = cutterPlane ? cutterPlane.transform.position : Vector3.zero;
-        var cutterNormal = cutterPlane ? cutterPlane.transform.up : Vector3.zero;
+        var cutterNormal = cutterPlane ? cutterPlane.transform.up.normalized : Vector3.zero;
 
-        props.SetVector("_CutterPosition", new Vector4(cutterPosition.x, cutterPosition.y, cutterPosition.z, cutterPlane ? 0 : 1));
+        props.SetVector("_CutterPosition", new Vector4(cutterPosition.x, cutterPosition.y, cutterPosition.z, cutterPlane ? 1 : 0));
         props.SetVector("_CutterNormal", new Vector4(cutterNormal.x, cutterNormal.y, cutterNormal.z, 0));
 
         renderer.SetPropertyBlock(props);
