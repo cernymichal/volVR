@@ -44,9 +44,6 @@ public class ScalableGrabInteractable : XRGrabInteractable {
         base.OnSelectExited(args);
         // Debug.Log("Select exited");
 
-        if (!scaling)
-            return;
-
         var interactorGameObject = args.interactorObject.transform.gameObject;
 
         if (selectingInteractorA == interactorGameObject)
