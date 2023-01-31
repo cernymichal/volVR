@@ -981,12 +981,6 @@ PrefabInstance:
       propertyPath: m_InteractionManager
       value: 
       objectReference: {fileID: 1901350754}
-    - target: {fileID: 8954760104753227612, guid: d3f7cd63bcc45344fa96b91a8ab3d953,
-        type: 3}
-      propertyPath: m_Mesh
-      value: 
-      objectReference: {fileID: -24470585287426858, guid: 397892ab92874b74199189fb83baf7ab,
-        type: 3}
     - target: {fileID: 8954760104753227613, guid: d3f7cd63bcc45344fa96b91a8ab3d953,
         type: 3}
       propertyPath: m_RootOrder
