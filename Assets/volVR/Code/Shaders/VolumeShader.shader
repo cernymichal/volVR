@@ -4,10 +4,12 @@ Shader "Unlit/VolumeShader"
     {
         [MainTexture] _VolumeTexture ("Volume Texture", 3D) = "white" {}
         [MainColor] _Color ("Color", Color) = (1.0, 1.0, 1.0, 1.0)
-        [HideInInspector] _CutterPosition ("Cutter Position", Vector) = (0.0, 0.0, 0.0, 0.0)
-        [HideInInspector] _CutterNormal ("Cutter Normal", Vector) = (0.0, 0.0, 0.0, 0.0)
         _Alpha ("Alpha", float) = 0.02
         _StepSize ("Step Size", float) = 0.025
+
+        [HideInInspector] _CutterPosition ("Cutter Position", Vector) = (0.0, 0.0, 0.0, 1.0)
+        [HideInInspector] _CutterNormal ("Cutter Normal", Vector) = (0.0, 0.0, 0.0, 1.0)
+        [HideInInspector] _Cutting ("Cutting?", float) = 0.0
     }
     SubShader
     {
@@ -42,6 +44,7 @@ Shader "Unlit/VolumeShader"
             UNITY_INSTANCING_BUFFER_START(Props)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _CutterPosition)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _CutterNormal)
+                UNITY_DEFINE_INSTANCED_PROP(float, _Cutting)
             UNITY_INSTANCING_BUFFER_END(Props)
 
             struct Attributes
@@ -81,9 +84,24 @@ Shader "Unlit/VolumeShader"
                 return accumulator;
             }
 
-            float CutterPlaneMask(float4 cutterPositionWorld, float3 cutterNormal, float3 samplePosition) {
-                float visible = dot(cutterNormal, normalize(cutterPositionWorld.xyz - TransformObjectToWorld(samplePosition)));
-                return max(ceil(clamp(visible, -0.9, 1.0)), 1.0 - cutterPositionWorld.w);
+            float CutterPlaneMask(float3 samplePosition, float3 cutterPositionWorld, float3 cutterNormal, float cutting) {
+                float visible = dot(cutterNormal, normalize(cutterPositionWorld - TransformObjectToWorld(samplePosition)));
+                return max(ceil(clamp(visible, -0.9, 1.0)), 1.0 - cutting);
+            }
+
+            float3 JumpRayToCuttingPlane(float3 rayOrigin, float3 rayDirection, float3 cutterPositionWorld, float3 cutterNormal) {
+                // TODO
+
+                rayOrigin = TransformObjectToWorld(rayOrigin);
+
+                if (dot(cutterPositionWorld - rayOrigin, cutterNormal) > 0)
+                    rayDirection = -rayDirection;
+                
+                float d = dot(cutterPositionWorld, -cutterNormal);
+                float t = -(dot(cutterNormal, rayOrigin) + d) / dot(cutterNormal, rayDirection);
+                float3 intersection = rayOrigin + max(t, 0) * rayDirection;
+
+                return TransformWorldToObject(intersection);
             }
 
             half4 frag(Varyings i) : SV_Target
@@ -95,9 +113,16 @@ Shader "Unlit/VolumeShader"
 
                 // Use vector from camera to object surface to get ray direction
                 float3 rayDirection = normalize(i.objectVertex - TransformWorldToObject(_WorldSpaceCameraPos));
+                // float3 rayDirectionWorld = normalize(TransformObjectToWorld(i.objectVertex) - _WorldSpaceCameraPos);
 
                 float4 cutterPositionWorld = UNITY_ACCESS_INSTANCED_PROP(Props, _CutterPosition);
                 float3 cutterNormal = UNITY_ACCESS_INSTANCED_PROP(Props, _CutterNormal).xyz;
+                float cutting = UNITY_ACCESS_INSTANCED_PROP(Props, _Cutting);
+                
+                /*
+                if (UNITY_ACCESS_INSTANCED_PROP(Props, _Cutting))
+                    rayOrigin = JumpRayToCuttingPlane(rayOrigin, rayDirectionWorld, cutterPositionWorld.xyz, cutterNormal);
+                */
 
                 float3 samplePosition = rayOrigin;
                 float accumulator = 0;
@@ -111,7 +136,7 @@ Shader "Unlit/VolumeShader"
                         continue;
 
                     float sampledValue = SAMPLE_TEXTURE3D(_VolumeTexture, linear_clamp_sampler, samplePosition + float3(0.5f, 0.5f, 0.5f)).a;
-                    sampledValue *= CutterPlaneMask(cutterPositionWorld, cutterNormal, samplePosition);
+                    sampledValue *= CutterPlaneMask(samplePosition, cutterPositionWorld.xyz, cutterNormal, cutting);
                     sampledValue *= _Alpha;
                     accumulator = AddSample(accumulator, sampledValue);
                     samplePosition += rayDirection * _StepSize;
