@@ -981,11 +981,6 @@ PrefabInstance:
       propertyPath: m_InteractionManager
       value: 
       objectReference: {fileID: 1901350754}
-    - target: {fileID: 8954760104753227612, guid: d3f7cd63bcc45344fa96b91a8ab3d953,
-        type: 3}
-      propertyPath: m_Mesh
-      value: 
-      objectReference: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
     - target: {fileID: 8954760104753227613, guid: d3f7cd63bcc45344fa96b91a8ab3d953,
         type: 3}
       propertyPath: m_RootOrder
@@ -1040,11 +1035,6 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 180
-      objectReference: {fileID: 0}
-    - target: {fileID: 8954760104753227615, guid: d3f7cd63bcc45344fa96b91a8ab3d953,
-        type: 3}
-      propertyPath: m_Enabled
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8954760104753227617, guid: d3f7cd63bcc45344fa96b91a8ab3d953,
         type: 3}

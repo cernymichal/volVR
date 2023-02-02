@@ -96,7 +96,7 @@ Material:
     m_Ints:
     - _Cutting: 0
     m_Floats:
-    - _Alpha: 6.6
+    - _Alpha: 7.1
     - _AlphaClip: 0
     - _Blend: 0
     - _BumpScale: 1
@@ -121,7 +121,7 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _StepCount: 128
-    - _StepSize: 0.025
+    - _StepSize: 0.02
     - _Surface: 0
     - _WorkflowMode: 1
     - _ZWrite: 1
